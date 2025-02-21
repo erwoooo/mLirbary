@@ -44,15 +44,15 @@ afterEvaluate {
     publishing{
         publications{
             create<MavenPublication>("aar"){
-                groupId = "com.lucky.library"
-                artifactId = "luckylibrary"
+                groupId = "com.erwoooo.mLirbary"
+                artifactId = "mLirbary"
                 version = "1.0.0"
 
                 //包含aar
                 from(components["release"])
 
                 pom {
-                    name.set("luckylibrary")
+                    name.set("mLirbary")
                     description.set("test my library")
                     url.set("https://github.com/erwoooo/mLirbary")
                     licenses {
@@ -63,7 +63,7 @@ afterEvaluate {
                     }
                     developers {
                         developer {
-                            id.set("lucky")
+                            id.set("erwoooo")
                             name.set("erwoooo")
                             email.set("653429798@qq.com")
                         }
@@ -72,7 +72,7 @@ afterEvaluate {
                     scm {
                         connection.set("scm:git:git://github.com/erwoooo/mLirbary.git")
 
-                        developerConnection.set("scm:git:ssh://github.com/erwoooo/mLirbary.git")
+                        developerConnection.set("scm:git:ssh://github.com:erwoooo/mLirbary.git")
                         url.set("https://github.com/erwoooo/mLirbary")
                     }
                 }
@@ -82,7 +82,7 @@ afterEvaluate {
         repositories{
             maven {
                 name="GitHubPackages"
-                url = uri("https://github.com/erwoooo/mLirbary")
+                url = uri("https://maven.pkg.github.com/erwoooo/mLirbary")
                 credentials {
                     username= (project.findProject("gpr.user")?:System.getenv("GPR_USER")) as? String
                     password = (project.findProject("gpr.key")?:System.getenv("GPR_KEY")) as? String
@@ -92,7 +92,9 @@ afterEvaluate {
     }
 
     signing{
-        useInMemoryPgpKeys(System.getenv("SINGING_KEY"),System.getenv("SINGING_PASSWORD"))
+        useInMemoryPgpKeys(
+            file("D:/Program Files (x86)/GNU/secret.key").readText(),
+            System.getenv("SINGING_PASSWORD"))
         sign(publishing.publications["aar"])
     }
 }
