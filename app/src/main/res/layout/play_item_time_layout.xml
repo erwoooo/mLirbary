@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/leftTvTextTime"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:text="10:00 AM"
+        android:textColor="@android:color/black"
+        android:textSize="10sp" />
+
+    <TextView
+        android:layout_alignParentBottom="true"
+        android:id="@+id/rightTvTextTime"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:textColor="@android:color/black"
+        android:textSize="10sp" />
+
+
+    <com.lucky.library.rv.view.TimeView
+        android:layout_marginStart="52dp"
+        android:id="@+id/tv_time"
+        android:layout_width="10dp"
+        android:layout_height="match_parent"/>
+
+    <ImageView
+
+        android:layout_marginStart="70dp"
+        android:visibility="visible"
+        android:id="@+id/iv_file"
+        android:src="@drawable/play_icon_file"
+        android:layout_width="90dp"
+        android:layout_height="70dp"/>
+
+    <RelativeLayout
+        android:id="@+id/rl_file"
+        android:layout_marginStart="70dp"
+        android:layout_width="90dp"
+        android:layout_height="70dp">
+
+        <TextView
+            android:text="录像"
+            android:layout_marginTop="20dp"
+            android:layout_marginStart="4dp"
+            android:textColor="@color/white"
+            android:textSize="10sp"
+            android:id="@+id/tv_title_file"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:text="11111"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="4dp"
+            android:textColor="@color/white"
+            android:textSize="10sp"
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:text="2222"
+            android:textColor="@color/white"
+            android:textSize="10sp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="10dp"
+            android:layout_marginTop="10dp"
+            android:id="@+id/tv_long"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <ImageView
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginBottom="10dp"
+            android:layout_marginEnd="10dp"
+            android:src="@drawable/play_icon_list_play"
+            android:id="@+id/iv_play"
+            android:layout_width="20dp"
+            android:layout_height="20dp"/>
+    </RelativeLayout>
+
+</RelativeLayout>

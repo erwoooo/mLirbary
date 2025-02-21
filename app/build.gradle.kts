@@ -4,7 +4,7 @@ plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("maven-publish")
-    id("signing")
+//    id("signing")
 }
 
 android {
@@ -44,38 +44,12 @@ afterEvaluate {
     publishing{
         publications{
             create<MavenPublication>("aar"){
-                groupId = "com.erwoooo.mLirbary"
-                artifactId = "mLirbary"
-                version = "1.0.0"
+                groupId = "com.github.erwoooo"
+                artifactId = "mlirbary"
+                version = "1.0.2"
 
-                //包含aar
-                from(components["release"])
+                artifact("$buildDir/outputs/aar/app-release.aar")
 
-                pom {
-                    name.set("mLirbary")
-                    description.set("test my library")
-                    url.set("https://github.com/erwoooo/mLirbary")
-                    licenses {
-                        license {
-                            name.set("The Apache License, Version 2.0")
-                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                        }
-                    }
-                    developers {
-                        developer {
-                            id.set("erwoooo")
-                            name.set("erwoooo")
-                            email.set("653429798@qq.com")
-                        }
-                    }
-
-                    scm {
-                        connection.set("scm:git:git://github.com/erwoooo/mLirbary.git")
-
-                        developerConnection.set("scm:git:ssh://github.com:erwoooo/mLirbary.git")
-                        url.set("https://github.com/erwoooo/mLirbary")
-                    }
-                }
             }
         }
 
@@ -84,19 +58,13 @@ afterEvaluate {
                 name="GitHubPackages"
                 url = uri("https://maven.pkg.github.com/erwoooo/mLirbary")
                 credentials {
-                    username= (project.findProject("gpr.user")?:System.getenv("GPR_USER")) as? String
-                    password = (project.findProject("gpr.key")?:System.getenv("GPR_KEY")) as? String
+                    username= "erwoooo"
+                    password = "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"
                 }
             }
         }
     }
 
-    signing{
-        useInMemoryPgpKeys(
-            file("D:/Program Files (x86)/GNU/secret.key").readText(),
-            System.getenv("SINGING_PASSWORD"))
-        sign(publishing.publications["aar"])
-    }
 }
 
 dependencies {
