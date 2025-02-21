@@ -45,14 +45,14 @@ afterEvaluate {
         publications{
             create<MavenPublication>("aar"){
                 groupId = "com.lucky.library"
-                artifactId = "mylibrary"
+                artifactId = "luckylibrary"
                 version = "1.0.0"
 
                 //包含aar
                 from(components["release"])
 
                 pom {
-                    name.set("mylibrary")
+                    name.set("luckylibrary")
                     description.set("test my library")
                     url.set("https://github.com/erwoooo/mLirbary")
                     licenses {
