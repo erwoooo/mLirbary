@@ -12,7 +12,7 @@ import com.lucky.library.R
 import com.lucky.library.rv.data.EventPosition
 import com.lucky.library.rv.data.TimeEvent
 import com.lucky.library.rv.data.TimeUit
-import com.lucky.library.rv.inter.TimeRecycleInterface
+import com.lucky.mod.play.rv.inter.TimeRecycleInterface
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -139,21 +139,21 @@ class TimeRecycleLayout(context: Context): RelativeLayout(context) {
                 tvTime.text =""
                 tvTitle.text =""
             }else{
-               if (!mEventPositionList[0].showPick){
-                   ivFile.visibility = GONE
-                   rlFile.visibility = GONE
-               }else{
-                   ivFile.setImageResource(R.drawable.play_icon_file_s)
-                   val txt =  mSimpleDateFormatInstance.format(Date(mEventPositionList[0].realStartTime * 1000L))
-                   Log.e(
-                       TAG,
-                       "setEventToView: 在单个的模式下 txt = $txt  startTime = ${mEventPositionList[0].realStartTime}",
+                if (!mEventPositionList[0].showPick){
+                    ivFile.visibility = GONE
+                    rlFile.visibility = GONE
+                }else{
+                    ivFile.setImageResource(R.drawable.play_icon_file_s)
+                    val txt =  mSimpleDateFormatInstance.format(Date(mEventPositionList[0].realStartTime * 1000L))
+                    Log.e(
+                        TAG,
+                        "setEventToView: 在单个的模式下 txt = $txt  startTime = ${mEventPositionList[0].realStartTime}",
 
-                       )
-                   tvTitle.text = txt
-                   tvTime.text = "${mEventPositionList[0].realEndTime - mEventPositionList[0].realStartTime}"
-                   tvFileTitle.text = ""
-               }
+                        )
+                    tvTitle.text = txt
+                    tvTime.text = "${mEventPositionList[0].realEndTime - mEventPositionList[0].realStartTime}"
+                    tvFileTitle.text = ""
+                }
             }
         }
 
@@ -167,10 +167,9 @@ class TimeRecycleLayout(context: Context): RelativeLayout(context) {
         return (getTimeViewHeight() - ((time - currentScaleStartTime) * 1f / mLongTimeDuration) * getTimeViewHeight()).toInt()
     }
 
-    fun computePositionTime(y : Int): Float{
-        val relativeY = y -(top + paddingTop)
-        val time =(getCurrentScaleEndTime() - (mLongTimeDuration * relativeY * 1f) / measuredHeight)
-        return time
+    fun computePositionTime(y: Int): Int {
+        val relativeY = y - (top + paddingTop)
+        return (getCurrentScaleEndTime() - ((mLongTimeDuration * relativeY * 1f) / measuredHeight).toInt())
     }
 
     fun getTimeViewHeight(): Int = timeView.measuredHeight
@@ -185,7 +184,7 @@ class TimeRecycleLayout(context: Context): RelativeLayout(context) {
     fun setLayoutType(layoutType: Int, padding: Int){
         when(layoutType){
             LAYOUT_START ->setPadding(0,padding,0,0)
-            LAYOUT_END ->setPadding(0,0,0,padding)
+            LAYOUT_END ->setPadding(0,0,0, (padding * 1.8).toInt())
         }
         mLayoutType = layoutType
     }
@@ -208,12 +207,12 @@ class TimeRecycleLayout(context: Context): RelativeLayout(context) {
      * @param curTime
      */
     fun setTvStartTime(curTime: Int,position: Boolean){
+        Log.e(TAG, "setTvStartTime: curTime $curTime")
         mCurrentScaleStartTime = curTime
         tvTopTime.text = mSimpleDateFormatInstance.format(Date(getCurrentScaleEndTime() * 1000L))
         if (mLayoutType == LAYOUT_END){
             tvBtmTime.text = mSimpleDateFormatInstance.format(Date(curTime * 1000L))
         }
-        Log.e(TAG, "position= $position setTvStartTime: curTime = $curTime nextTime= ${getCurrentScaleEndTime()}")
     }
 
     fun getCurrentScaleStartTime() = mCurrentScaleStartTime

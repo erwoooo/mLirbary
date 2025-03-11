@@ -13,7 +13,7 @@ package com.lucky.library.rv.data
  * @property endTime 结束时间
  * @property alarmType 报警类型
  */
- class TimeEvent{
+class TimeEvent{
     var startTime: Int = 0
     var endTime: Int = 0
     var alarmType: Int = 0

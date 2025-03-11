@@ -1,4 +1,4 @@
-package com.lucky.library.rv.inter
+package com.lucky.mod.play.rv.inter
 
 import com.lucky.library.rv.data.TimeEvent
 
@@ -9,7 +9,24 @@ import com.lucky.library.rv.data.TimeEvent
  */
 interface TimeRecycleInterface {
 
+    /**
+     * 单个文件播放
+     *
+     * @param startTime
+     */
     fun onTimePlay(startTime: Int)
 
+    /**
+     * 滑动到指定位置播放
+     *
+     * @param startTime
+     */
+    fun onScrollTimePlay(startTime: Int)
+
+    /**
+     * 播放文件列表
+     *
+     * @param list
+     */
     fun onTimeList(list: List<TimeEvent>)
 }

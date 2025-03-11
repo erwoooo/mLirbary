@@ -17,7 +17,7 @@ import com.lucky.library.rv.data.EventTimeComputeTool
 
 import com.lucky.library.rv.data.TimeEvent
 import com.lucky.library.rv.data.TimeUit
-import com.lucky.library.rv.inter.TimeRecycleInterface
+import com.lucky.mod.play.rv.inter.TimeRecycleInterface
 import com.lucky.library.rv.view.TimeRecycleLayout
 
 /**
@@ -30,6 +30,7 @@ class TimeRecycleView(context: Context,attributeSet: AttributeSet): RecyclerView
     private val TAG = "TimeRecycleView"
     private var mStartTime: Int = 0
     private var mEndTime: Int = 0
+    private var mPlayAutoScroll = false
     private val mTimeEventList: ArrayList<TimeEvent> by lazy {
         arrayListOf()
     }
@@ -55,6 +56,9 @@ class TimeRecycleView(context: Context,attributeSet: AttributeSet): RecyclerView
         TimeRecycleAdapter()
     }
 
+    /**
+     * 滚动监听
+     */
     private val mOnScrollListener: OnScrollListener by lazy {
         object : OnScrollListener(){
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -66,14 +70,27 @@ class TimeRecycleView(context: Context,attributeSet: AttributeSet): RecyclerView
 
                 when(newState){
                     SCROLL_STATE_IDLE->{
-                        val view = findChildViewUnder(0f,mScrollYCenter.toFloat()) ?: return
-                        val holder: TimeRecycleHolder = getChildViewHolder(view) as? TimeRecycleHolder
-                            ?:return
-                        val timeRecycleLayout: TimeRecycleLayout = holder.getView()
-                        val firstPosition = holder.adapterPosition
-
                         mCenterLineIndicateTime =
-                            timeRecycleLayout.computePositionTime(mScrollYCenter).toInt()
+                            getRelativePositionTime(mScrollYCenter)
+                        if (mDragByUser){
+                            mDragByUser = false
+                            mTopLineIndicateTime = getRelativePositionTime(mScrollYTop)
+                            Log.e(
+                                TAG,
+                                "onScrollStateChanged: mTopLineIndicateTime $mTopLineIndicateTime",
+
+                                )
+                            mTimeRecycleInterface?.onScrollTimePlay(mTopLineIndicateTime)
+                        }
+                    }
+
+                    SCROLL_STATE_DRAGGING->{
+                        mDragByUser = true
+                        pauseAutoPlayScrolled()
+                    }
+                    SCROLL_STATE_SETTLING->{
+                        mDragByUser = false
+                        Log.e(TAG, "onScrollStateChanged: 我在自动滚动")
                     }
                 }
 
@@ -82,6 +99,7 @@ class TimeRecycleView(context: Context,attributeSet: AttributeSet): RecyclerView
     }
     private var mScaleGestureDetector: ScaleGestureDetector ?= null
 
+    private var mDragByUser: Boolean = false
     private var mLeft: Int = 0
     private var mTop: Int = 0
     private var mRight: Int = 0
@@ -96,26 +114,73 @@ class TimeRecycleView(context: Context,attributeSet: AttributeSet): RecyclerView
     }
 
 
+    /**
+     * 中心位置在频幕上的位置
+     */
     private var mScrollYCenter: Int = 0
 
+    /**
+     * 顶部位置在屏幕上的位置
+     */
+    private var mScrollYTop: Int = 0
+
+    /**
+     * 顶部位置的时间戳
+     */
+    private var mTopLineIndicateTime: Int = 0
+    /**
+     * 中心位置的时间戳
+     */
     private var mCenterLineIndicateTime: Int = 0
 
+    /**
+     * 设置开始时间和结束时间
+     *
+     * @param startTime
+     * @param endTime
+     */
     fun setDayTime(startTime: Int,endTime: Int){
         mStartTime = startTime
         mEndTime = endTime
         calcItemSum()
     }
 
+    /**
+     * 回调接口
+     *
+     * @param timeRecycleInterface
+     */
     fun setTimeRecycleInterface(timeRecycleInterface: TimeRecycleInterface){
         mTimeRecycleInterface = timeRecycleInterface
     }
 
-    fun setDataSource(list: List<TimeEvent>){
+    /**
+     * 设置数据源
+     *
+     * @param list
+     */
+    fun setDataSource(list: List<TimeEvent>, startTime: Int, endTime: Int){
+        Log.e(TAG, "setDataSource: 开始时间 $startTime  结束时间 $endTime")
         mTimeEventList.clear()
         mTimeEventList.addAll(list)
+        mStartTime = startTime
+        mEndTime = endTime
+        calcItemSum()
+        mTimeRecycleAdapter.notifyDataSetChanged()
     }
 
+    fun getRelativePositionTime(relativeY: Int): Int{
+        val view = findChildViewUnder(0f,relativeY.toFloat()) ?: return - 1
+        val holder: TimeRecycleHolder = getChildViewHolder(view) as? TimeRecycleHolder
+            ?:return -1
+        val timeRecycleLayout: TimeRecycleLayout = holder.getView()
+        return  timeRecycleLayout.computePositionTime(relativeY)
+    }
 
+    /**
+     * 计算item个数
+     *
+     */
     private fun calcItemSum(){
         mItemTotalNumber = (mEndTime - mStartTime) / mCurTimeUit.timeDuration
     }
@@ -151,6 +216,7 @@ class TimeRecycleView(context: Context,attributeSet: AttributeSet): RecyclerView
 
         fun getItemPositionByTime(time: Int): Int{
             val position  = (mEndTime - time) / mCurTimeUit.timeDuration
+            Log.e(TAG, "getItemPositionByTime: position $position")
             return position.takeIf { position < mItemTotalNumber } ?: (mItemTotalNumber - 1)
         }
 
@@ -158,9 +224,9 @@ class TimeRecycleView(context: Context,attributeSet: AttributeSet): RecyclerView
             return mItemTotalNumber
         }
 
-         fun getItem(position: Int): Int{
-           return if (position < mItemTotalNumber){
-                (mEndTime - (position + 1) * mCurTimeUit.timeDuration)
+        fun getItem(position: Int): Int{
+            return if (position < mItemTotalNumber){
+                mEndTime - ((position + 1) * mCurTimeUit.timeDuration)
             }else{
                 0
             }
@@ -172,14 +238,20 @@ class TimeRecycleView(context: Context,attributeSet: AttributeSet): RecyclerView
             with(holder.getView()){
                 setLayoutHeight(mItemHeight)
                 setLayoutType(getItemViewType(position),(mViewGroup?.height?: mItemHeight) / 2)
-                setTvStartTime(getItem(position),position == (mItemTotalNumber -1))
                 setLongTimeDuration(mCurTimeUit.timeDuration)
+                setTvStartTime(getItem(position),position == (mItemTotalNumber -1))
                 setEvent(EventTimeComputeTool.findEventTimeList(getCurrentScaleStartTime(),getCurrentScaleEndTime(),mTimeEventList))
             }
         }
 
     }
 
+    /**
+     * 缩放
+     *
+     * @param detector
+     * @return
+     */
     override fun onScale(detector: ScaleGestureDetector): Boolean {
         val scaleFactor = detector.scaleFactor
 
@@ -202,7 +274,17 @@ class TimeRecycleView(context: Context,attributeSet: AttributeSet): RecyclerView
         return false
     }
 
+    /**
+     * 缩放因子
+     */
     private var mScaleFactor: Float = 1f
+
+    /**
+     * 设置缩放，并修改item高度
+     *
+     * @param scaleFactor
+     * @return
+     */
     private fun setScaleFactor(scaleFactor: Float) : Int {
         val curTimeUit = mCurTimeUit
         if (scaleFactor == 1f){
@@ -265,7 +347,9 @@ class TimeRecycleView(context: Context,attributeSet: AttributeSet): RecyclerView
         mRight = measuredWidth - paddingRight
         mBottom = measuredHeight - paddingBottom
         mScrollYCenter = mTop + (mBottom - mTop) / 2
-        Log.e(TAG, "onLayout: recycleview mScrollYCenter= $mScrollYCenter")
+
+        mScrollYTop = mTop + 50
+        Log.e(TAG, "onLayout: recycleview mScrollYCenter= $mScrollYCenter  mScrollYTop= $mScrollYTop")
     }
 
 
@@ -275,11 +359,36 @@ class TimeRecycleView(context: Context,attributeSet: AttributeSet): RecyclerView
      * @param time
      */
     fun scrollToTimePosition(time: Int){
+        Log.e(TAG, "scrollToTimePosition: time $time")
         val timeRecycleLayout: TimeRecycleLayout = findChildViewUnder(0f, mScrollYCenter.toFloat()) as? TimeRecycleLayout
             ?:return
         val viewHeight = timeRecycleLayout.getTimeViewHeight()
         scrollToTimePosition(time,viewHeight)
     }
+
+    /**
+     * 滚动到顶部
+     *
+     * @param time
+     */
+    fun scrollToTimeTopPosition(time: Int){
+        val timeRecycleLayout: TimeRecycleLayout = findChildViewUnder(0f, mScrollYTop.toFloat()) as? TimeRecycleLayout
+            ?:return
+        val viewHeight = timeRecycleLayout.getTimeViewHeight()
+        scrollToTimeTopPosition(time,viewHeight)
+    }
+    private fun scrollToTimeTopPosition(time: Int,viewHeight: Int){
+        val scrollTime = mStartTime.coerceAtLeast(time)
+        Log.e(TAG, "scrollToTimePosition: scrollTime  $scrollTime  time $time")
+        val newPosition = mTimeRecycleAdapter.getItemPositionByTime(scrollTime)
+        var offsetY = (mScrollYTop - (mTimeRecycleAdapter.getItem(newPosition) + mCurTimeUit.timeDuration - scrollTime) * 1f * viewHeight / mCurTimeUit.timeDuration).toInt()
+        if (newPosition == 0){
+            offsetY = -mScrollYTop
+        }
+        Log.e(TAG, "scrollToTimePosition: newPosition = $newPosition offsetY= $offsetY")
+        mLinearLayoutManager.scrollToPositionWithOffset(newPosition,offsetY)
+    }
+
 
     /**
      * 设置滑动后的中心位置
@@ -288,7 +397,8 @@ class TimeRecycleView(context: Context,attributeSet: AttributeSet): RecyclerView
      * @param viewHeight
      */
     private fun scrollToTimePosition(time: Int,viewHeight: Int){
-        val scrollTime = time.takeIf { it <= 0 }?:mStartTime
+        val scrollTime = mStartTime.coerceAtLeast(time)
+        Log.e(TAG, "scrollToTimePosition: scrollTime  $scrollTime  time $time")
         val newPosition = mTimeRecycleAdapter.getItemPositionByTime(scrollTime)
         var offsetY = (mScrollYCenter - (mTimeRecycleAdapter.getItem(newPosition) + mCurTimeUit.timeDuration - scrollTime) * 1f * viewHeight / mCurTimeUit.timeDuration).toInt()
         if (newPosition == 0){
@@ -297,5 +407,73 @@ class TimeRecycleView(context: Context,attributeSet: AttributeSet): RecyclerView
         Log.e(TAG, "scrollToTimePosition: newPosition = $newPosition offsetY= $offsetY")
         mLinearLayoutManager.scrollToPositionWithOffset(newPosition,offsetY)
         mCenterLineIndicateTime = scrollTime
+    }
+
+
+    /**
+     * 控制当前缩放
+     * 每次缩放之后，要拿到新的中心时间戳mCenterLineIndicateTime
+     * 以mCenterLineIndicateTime为中心缩放
+     * @param scale
+     */
+    fun setTimeUit(scale: Int) : TimeUit {
+        Log.e(TAG, "setTimeUit: scale $scale")
+        val nextTimeUit = TimeUit.getNextTimeUit(mCurTimeUit,scale)
+        if (mCurTimeUit == nextTimeUit && mItemHeight == mDefaultItemHeight){
+            return  mCurTimeUit
+        }
+        mScaleFactor = 1f
+        mCurTimeUit = nextTimeUit
+        calcItemSum()
+        mItemHeight = mDefaultItemHeight
+        mTempItemHeight = mItemHeight
+
+        mTimeRecycleAdapter.notifyDataSetChanged()
+        val newPosition = mTimeRecycleAdapter.getItemPositionByTime(mCenterLineIndicateTime)
+        val duration = mCurTimeUit.timeDuration
+        var offsetY = (mScrollYCenter - (mTimeRecycleAdapter.getItem(newPosition) + duration - mCenterLineIndicateTime) * 1f * height / duration).toInt()
+        if (newPosition == 0){
+            offsetY = -mScrollYCenter
+        }
+
+        mLinearLayoutManager.scrollToPositionWithOffset(newPosition,offsetY)
+        return mCurTimeUit
+    }
+
+
+    /**
+     * recycle播放视频时自动滑动
+     *
+     * @param time
+     */
+    fun autoPlayScrolled(time: Int){
+        isAutoPlayScrolled().takeIf { it }?.let {
+            scrollToTimeTopPosition(time)
+        }
+    }
+
+    /**
+     * 恢复自动滚动的标志
+     *
+     */
+    fun resumeAutoPlayScrolled(){
+        mPlayAutoScroll = true
+    }
+
+    /**
+     * 判断是否自动滚动
+     *
+     * @return
+     */
+    fun isAutoPlayScrolled(): Boolean{
+        return mPlayAutoScroll
+    }
+
+    /**
+     * 停止自动滚动
+     *
+     */
+    fun pauseAutoPlayScrolled(){
+        mPlayAutoScroll = false
     }
 }
